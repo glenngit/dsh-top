@@ -1,0 +1,6 @@
+# dsh-sysmon — System Monitor bundle layer.
+# Host half registers GET /api/sysmon-stats; the package also declares a
+# dsh.client web bundle that paints the top-right overlay widget.
+- insert:
+    - id: dsh-sysmon
+      name: dsh-sysmon
