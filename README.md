@@ -23,22 +23,37 @@ A plugin for the [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harn
 
 | Part | File | What it does |
 |---|---|---|
-| Host half | `lib/index.js` | Registers `GET /api/dsh-top-stats`; CPU + memory use cross-platform Node `os` APIs; disk, network and processes use per-platform collectors that degrade to `null` when unavailable. |
+| Host half | `lib/index.js` | Registers `GET /api/dsh-top-stats`; CPU + memory use Node `os` APIs with container-aware cgroup overrides; disk, network and processes use per-platform collectors that degrade to `null` when unavailable. |
 | Browser half | `lib/client.js` | `dsh.client` web bundle; registers the panel into the frame-wide `shell.overlay` slot; polls every 2 s (pauses while collapsed). |
 | Composition | `cordis.patch.yml` | The `dsh.bundle` patch layer that inserts the loader entry. |
 
 ## Platform support
 
-DSH host code runs on Linux, but the DSH *server* can be run on any OS Node.js supports. `dsh-top` is multi-platform: it always reports at least CPU + memory (pure Node `os`, no subprocess), and fills in disk / network / processes where the platform allows. Missing sections are shown as **n/a** in the widget rather than failing the whole request.
+DSH host code runs on Linux, but the DSH *server* can be run on any OS Node.js supports. `dsh-top` is multi-platform: it always reports at least CPU + memory (Node `os`, no subprocess), and fills in disk / network / processes where the platform allows. Missing sections are shown as **n/a** in the widget rather than failing the whole request.
 
 | Platform | CPU | MEM | DISK | NETWORK | PROCESSES |
 |---|---|:---:|:---:|:---:|:---:|
 | Linux | ✅ | ✅ | `df` | `/proc/net/dev` | `ps` |
 | macOS | ✅ | ✅ | `df` | `netstat -ib` | `ps` (BSD) |
 | Windows | ✅ | ✅ | PowerShell `Get-PSDrive` | PowerShell `Get-NetAdapterStatistics` | PowerShell `Get-Process` |
+| Containers (cgroup) | ✅* | ✅* | `df`* | `/proc/net/dev`* | `ps`* |
 | Other / unknown | ✅ | ✅ | n/a | n/a | n/a |
 
-The CPU + memory meters work on every Node platform. Disk, network and process meters depend on the listed command/pseudo-file being present (e.g. slim/distroless containers may lack `df`/`ps`) — those sections then render as **n/a** while the rest keep working.
+\* Container support is **container-aware and graceful**:
+
+- **Memory** — when a cgroup memory limit is set (Docker `--memory`, a Kubernetes limit, systemd unit limit), the MEM meter reports the container's *limit* and current usage (cgroup v2 `memory.max`/`memory.current`, or v1 `memory.limit_in_bytes`/`usage_in_bytes`) instead of the host's total. On an unlimited cgroup it falls back to the host `os.totalmem()` view.
+- **CPU cores** — when the cgroup restricts CPU (v2 `cpu.max` quota/period, or v1 `cpu.cfs_quota_us/period_us`), the core count reflects the quota; otherwise it uses `os.cpus().length`.
+- **Slim/distroless images** that lack `df`/`ps` still report CPU + memory; the missing DISK/NETWORK/PROCESSES sections render as **n/a**.
+
+The CPU + memory meters work on every Node platform. Disk, network and process meters depend on the listed command/pseudo-file being present — otherwise those sections render as **n/a** while the rest keep working.
+
+## Testing
+
+```sh
+npm test
+```
+
+Runs a zero-dependency suite (`node --test`) over the pure collector parsers with realistic fixtures: Linux (`df`, `/proc/net/dev`, `ps`), macOS (`netstat -ib`, BSD `ps`), and Windows (PowerShell JSON output), plus the container memory/CPU fallback contract. The macOS/Windows parsers are verified here without needing a live Mac or Windows machine — only the thin command-execution wrapper around them is platform-bound.
 
 ## Security
 
