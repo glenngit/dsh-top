@@ -35,14 +35,17 @@ DSH host code runs on Linux, but the DSH *server* can be run on any OS Node.js s
 |---|---|:---:|:---:|:---:|:---:|
 | Linux | ✅ | ✅ | `df` | `/proc/net/dev` | `ps` |
 | macOS | ✅ | ✅ | `df` | `netstat -ib` | `ps` (BSD) |
-| Windows | ✅ | ✅ | PowerShell `Get-PSDrive` | PowerShell `Get-NetAdapterStatistics` | PowerShell `Get-Process` |
+| Windows | ✅ | ✅ | PowerShell `Get-PSDrive` | PowerShell `Get-NetAdapterStatistics` | PowerShell `Get-Process`† |
 | Containers (cgroup) | ✅* | ✅* | `df`* | `/proc/net/dev`* | `ps`* |
 | Other / unknown | ✅ | ✅ | n/a | n/a | n/a |
+
+† Windows process CPU is a **lifetime-average percentage** — `Get-Process.CPU` (cumulative CPU seconds) divided by process age, the same semantics Linux `ps pcpu` reports — and MEM% is derived from the real RSS bytes, not the raw working-set value. Every external collector (`ps`, `df`, `powershell`, …) runs with a **5 s timeout**, so a wedged tool degrades its section to n/a instead of hanging the request.
 
 \* Container support is **container-aware and graceful**:
 
 - **Memory** — when a cgroup memory limit is set (Docker `--memory`, a Kubernetes limit, systemd unit limit), the MEM meter reports the container's *limit* and current usage (cgroup v2 `memory.max`/`memory.current`, or v1 `memory.limit_in_bytes`/`usage_in_bytes`) instead of the host's total. On an unlimited cgroup it falls back to the host `os.totalmem()` view.
 - **CPU cores** — when the cgroup restricts CPU (v2 `cpu.max` quota/period, or v1 `cpu.cfs_quota_us/period_us`), the core count reflects the quota; otherwise it uses `os.cpus().length`.
+- **Tightest ancestor wins, sentinels are safe** — the limit files are read by walking *our own* cgroup path upward (not just the cgroup root), so a Docker limit under a host-level cap is reported correctly. Kernel-default sentinels are treated as "no limit": v2 `max`, v1 CFS `-1`, and the ~2^63 bytes v1 `memory.limit_in_bytes` reports on an unrestricted root — so an unrestricted host is never misread as having exabyte-sized RAM.
 - **Slim/distroless images** that lack `df`/`ps` still report CPU + memory; the missing DISK/NETWORK/PROCESSES sections render as **n/a**.
 
 The CPU + memory meters work on every Node platform. Disk, network and process meters depend on the listed command/pseudo-file being present — otherwise those sections render as **n/a** while the rest keep working.
@@ -53,7 +56,7 @@ The CPU + memory meters work on every Node platform. Disk, network and process m
 npm test
 ```
 
-Runs a zero-dependency suite (`node --test`) over the pure collector parsers with realistic fixtures: Linux (`df`, `/proc/net/dev`, `ps`), macOS (`netstat -ib`, BSD `ps`), and Windows (PowerShell JSON output), plus the container memory/CPU fallback contract. The macOS/Windows parsers are verified here without needing a live Mac or Windows machine — only the thin command-execution wrapper around them is platform-bound.
+Runs a zero-dependency suite (`node --test`) over the pure collector parsers with realistic fixtures: Linux (`df`, `/proc/net/dev`, `ps`), macOS (`netstat -ib`, BSD `ps`), and Windows (PowerShell JSON output — including the CPU-seconds→percentage and RSS-bytes→percent conversions), plus the cgroup file parsers (`memory.max`, `cpu.max`, CFS quota, and the "no limit" sentinels) and the live container memory/CPU fallback contract. The macOS/Windows parsers are verified here without needing a live Mac or Windows machine — only the thin command-execution wrapper around them is platform-bound.
 
 ## Security
 
