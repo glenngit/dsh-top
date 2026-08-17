@@ -1,6 +1,6 @@
 # dsh-sysmon
 
-A plugin for the [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) (DSH) **web GUI**: a **bashtop-style** floating panel pinned to the **top-right corner** showing live system stats.
+A plugin for the [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) (DSH) **web GUI**: a system monitoring tool that shows live system stats in a floating panel pinned to the **top-right corner**.
 
 ## Features
 
@@ -9,7 +9,7 @@ A plugin for the [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harn
 - **DISK** — used / total with percentage bar
 - **NETWORK** — download / upload throughput (computed from `/proc/net/dev` byte deltas)
 - **Top 6 processes** — PID, name, CPU%, MEM%
-- Dark bashtop palette (cyan CPU, magenta RAM, yellow disk, blue/green network), monospace
+- Dark color-coded palette (cyan CPU, magenta RAM, yellow disk, blue/green network), monospace
 - **Draggable** via the title bar, **collapsible** via the `–` / `+` button
 - Transient monitor processes (`ps`, `awk`, `head`, …) are filtered out of the top-processes list
 

@@ -1,7 +1,7 @@
 {
   "name": "dsh-sysmon",
   "version": "0.1.0",
-  "description": "System Monitor for the dsh web GUI: a bashtop-style floating panel (top-right) showing CPU, RAM, disk, network throughput, and the top 6 processes.",
+  "description": "System monitoring tool for the dsh web GUI: live CPU, RAM, disk, network, and top processes in a floating, collapsible panel.",
   "type": "module",
   "main": "lib/index.js",
   "files": [
@@ -30,7 +30,6 @@
     "deepseek-harness",
     "plugin",
     "system-monitor",
-    "bashtop",
     "web"
   ],
   "license": "MIT"
