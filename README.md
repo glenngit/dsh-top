@@ -23,13 +23,13 @@ A plugin for the [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harn
 
 | Part | File | What it does |
 |---|---|---|
-| Host half | `lib/index.js` | Registers `GET /api/dsh-top-stats`; reads CPU, memory, disk, network and top processes with read-only `/proc` + `ps` + `df` reads. |
-| Browser half | `lib/client.js` | `dsh.client` web bundle; registers the panel into the frame-wide `shell.overlay` slot; polls every 2 s. |
+| Host half | `lib/index.js` | Registers `GET /api/dsh-top-stats`; reads CPU, memory, disk, network and top processes via read-only `/proc` (`fs.readFileSync`) + `ps` + `df`. |
+| Browser half | `lib/client.js` | `dsh.client` web bundle; registers the panel into the frame-wide `shell.overlay` slot; polls every 2 s (pauses while collapsed). |
 | Composition | `cordis.patch.yml` | The `dsh.bundle` patch layer that inserts the loader entry. |
 
 ## Security
 
-Because it is a *system monitor*, the host half reads host-wide process, CPU, memory and disk state. To do that it invokes the fixed read-only binaries `cat`, `ps` and `df` via `execFileSync` with a **static argv array** (never a shell string), so there is **no shell-injection surface** and no attacker-controlled input. No data leaves the host, no credentials are read, and every read is **read-only**.
+Because it is a *system monitor*, the host half reads host-wide process, CPU, memory and disk state. All `/proc` reads go through Node's own `fs.readFileSync` (no subprocess). Only the two binaries that expose their data as processes rather than files — `ps` and `df` — are invoked, via `execFileSync` with a **static argv array** (never a shell string), so there is **no shell-injection surface** and no attacker-controlled input. No data leaves the host, no credentials are read, and every read is **read-only**.
 
 > `dsh.so`'s static scanner flags the `node:child_process` import as "critical". That is a heuristic signal on the mere presence of process access — not a vulnerability. Process access is intrinsic to a monitoring tool; review the (small) source yourself: the commands are hard-coded, read-only, and argument-confined.
 
