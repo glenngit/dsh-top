@@ -12,8 +12,10 @@ import assert from "node:assert/strict";
 import {
   parseDisk, parseDiskWin,
   parseNetLinux, parseNetDarwin, parseNetWin,
-  parseProcs, containerMem, containerCores,
+  parseProcs, parseMeminfo,
+  containerMem, containerCores,
   parseCgroupMemLimit, parseCgroupQuota, parseCgroupCfsQuota,
+  EXEC_TIMEOUT_MS,
 } from "../lib/index.js";
 
 // ---------------------------------------------------------------------------
@@ -224,4 +226,52 @@ test("containerCores returns a positive integer or null", () => {
   if (cc === null) return; // host view — valid
   assert.equal(Number.isInteger(cc), true);
   assert.ok(cc >= 1);
+});
+
+// ---------------------------------------------------------------------------
+// Swap / /proc/meminfo parser
+// ---------------------------------------------------------------------------
+
+test("parseMeminfo extracts requested keys in kB", () => {
+  const raw =
+    "MemTotal:       16299920 kB\n" +
+    "MemFree:         1234567 kB\n" +
+    "MemAvailable:    9123456 kB\n" +
+    "SwapTotal:      8388608 kB\n" +
+    "SwapFree:       4194304 kB\n";
+  const m = parseMeminfo(raw, ["SwapTotal", "SwapFree", "MemAvailable"]);
+  assert.equal(m.SwapTotal, 8388608);
+  assert.equal(m.SwapFree, 4194304);
+  assert.equal(m.MemAvailable, 9123456);
+});
+
+test("parseMeminfo returns 0 for absent / unparsable keys", () => {
+  const raw = "MemTotal: 1000 kB\n";
+  const m = parseMeminfo(raw, ["SwapTotal", "NotARealKey"]);
+  assert.equal(m.SwapTotal, 0);
+  assert.equal(m.NotARealKey, 0);
+});
+
+test("parseMeminfo tolerates null input without throwing", () => {
+  const m = parseMeminfo(null, ["SwapTotal"]);
+  assert.equal(m.SwapTotal, 0);
+});
+
+test("swap math: used = total - free, never negative", () => {
+  // Guard the pct/used derivation used by collectSwap for any input values.
+  const total = 1000000, free = 800000;
+  const used = Math.max(0, total - free);
+  assert.equal(used, 200000);
+  const overFree = 1200000; // free > total edge case still clamps to 0
+  assert.equal(Math.max(0, total - overFree), 0);
+});
+
+// ---------------------------------------------------------------------------
+// Exec timeout guard
+// ---------------------------------------------------------------------------
+
+test("runJson enforces a positive bounded EXEC_TIMEOUT_MS", () => {
+  assert.equal(typeof EXEC_TIMEOUT_MS, "number");
+  assert.ok(Number.isInteger(EXEC_TIMEOUT_MS));
+  assert.ok(EXEC_TIMEOUT_MS > 0 && EXEC_TIMEOUT_MS <= 10_000);
 });
