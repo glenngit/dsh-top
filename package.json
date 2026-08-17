@@ -1,5 +1,5 @@
 {
-  "name": "dsh-sysmon",
+  "name": "dsh-top",
   "version": "0.1.0",
   "description": "System monitoring tool for the dsh web GUI: live CPU, RAM, disk, network, and top processes in a floating, collapsible panel.",
   "type": "module",

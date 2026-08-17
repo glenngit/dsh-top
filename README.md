@@ -1,12 +1,12 @@
-# dsh-sysmon
+# dsh-top
 
 A plugin for the [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) (DSH) **web GUI**: a system monitoring tool that shows live system stats in a floating, collapsible panel pinned to the **top-right corner**.
 
 <p align="center">
-  <img src="docs/screenshot.png" alt="dsh-sysmon System Monitor panel" width="342" />
+  <img src="docs/screenshot.png" alt="dsh-top System Monitor panel" width="342" />
 </p>
 
-[![dsh.so security](https://www.dsh.so/badges/dsh-sysmon.svg)](https://www.dsh.so/artifact/dsh-sysmon/)
+[![dsh.so security](https://www.dsh.so/badges/dsh-top.svg)](https://www.dsh.so/artifact/dsh-top/)
 
 ## Features
 
@@ -23,7 +23,7 @@ A plugin for the [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harn
 
 | Part | File | What it does |
 |---|---|---|
-| Host half | `lib/index.js` | Registers `GET /api/sysmon-stats`; reads CPU, memory, disk, network and top processes with read-only `/proc` + `ps` + `df` reads. |
+| Host half | `lib/index.js` | Registers `GET /api/dsh-top-stats`; reads CPU, memory, disk, network and top processes with read-only `/proc` + `ps` + `df` reads. |
 | Browser half | `lib/client.js` | `dsh.client` web bundle; registers the panel into the frame-wide `shell.overlay` slot; polls every 2 s. |
 | Composition | `cordis.patch.yml` | The `dsh.bundle` patch layer that inserts the loader entry. |
 
