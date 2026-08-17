@@ -36,9 +36,7 @@ Because it is a *system monitor*, the host half reads host-wide process, CPU, me
 ## Install
 
 ```sh
-# place this package somewhere, then link it into your web profile:
-dsh plugin --profile web add .
-# or wire it manually into the profile's bundles + link dependency
+dsh plugin --profile web add dsh-top
 ```
 
 Then restart the web app and refresh the page — the panel appears at the top-right.
