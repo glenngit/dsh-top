@@ -6,7 +6,7 @@ A plugin for the [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harn
   <img src="docs/screenshot.png" alt="dsh-top System Monitor panel" width="342" />
 </p>
 
-[![dsh.so security](https://www.dsh.so/badges/dsh-top.svg)](https://www.dsh.so/artifact/dsh-top/)
+[![dsh.so security](https://www.dsh.so/badge/dsh-top.svg)](https://www.dsh.so/artifact/dsh-top/)
 
 ## Features
 
